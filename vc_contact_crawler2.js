@@ -10,32 +10,47 @@ http://startupboard.sudoboot.com/contacts
 }
 */
 
-var http = require('http')
 var cheerio = require('cheerio')
+var request = require('request');
+var async = require('async')
 var fs = require('fs')
-var page = 1
-
 var baseUrl = 'http://startupboard.sudoboot.com/contacts?page='
-for(var pageNumber = 1; pageNumber<75; pageNumber++){
-    console.log(pageNumber)
-    http.get(baseUrl+pageNumber, function(res) {
-    console.log(baseUrl+pageNumber + '----------')
-    var html = ''
-    res.on('data', function(data) {
-        html += data
-    })
+var pageNumber = 1
 
-    res.on('end', function() {
-        filterContacts(html, pageNumber)
+function getData(n) {
+    request(baseUrl + n, function(error, response, body) {
+        console.log(baseUrl + n)
+        if (!error && response.statusCode == 200) {
+            filterContacts(body) // Show the HTML for the Google homepage. 
+        }
     })
-}).on('error', function(error) {
-    console.log('获取数据出错')
-    console.log(error)
-})
 }
 
+// for(var i=1;i<11;i++){
+//     getData(i)
+// }
 
-function filterContacts(html, pageNumber) {
+var n = 0
+
+var get = setInterval(function() {
+    n++
+    if(n==75){
+        clearInterval(get)
+    } 
+    getData(n)
+}, 1500)
+
+
+// // generate 5 users
+// async.times(50, function(n, next){
+//     getData(n+1)
+
+// }, function(err, users) {
+//   // we should now have 5 users
+// });
+
+
+function filterContacts(html) {
     var contacts = []
     var $ = cheerio.load(html)
     var contacts = $('tbody').children()
@@ -62,7 +77,7 @@ function filterContacts(html, pageNumber) {
             }
         })
 
-        fs.appendFile('contact'+pageNumber+'.txt', JSON.stringify(singleContact) + '\n')
+        fs.appendFile('contactsnew.txt', JSON.stringify(singleContact) + '\n')
             // console.log(singleContact)
     })
 }
